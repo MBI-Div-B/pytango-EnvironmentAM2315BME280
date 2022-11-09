@@ -7,7 +7,7 @@
 # Author: Luca Barbera / Email: barbera@mbi-berlin.de
 
 
-from tango import AttrWriteType, DevState, DebugIt, ErrorIt, InfoIt, DeviceProxy
+from tango import AttrWriteType, DevState, DebugIt, ErrorIt, InfoIt, DeviceProxy, DevFailed, ConnectionFailed
 from tango.server import Device, attribute, command, device_property
 
 
@@ -49,9 +49,13 @@ class AM2315BME280MuxSensor(Device):
         else:
             self.error_stream('Worng Address')
             self.set_state(DevState.FAULT)
-            
-        e = self.ctrl.init_sensor((self.Channel,self.sens_int))
-        
+
+        try:
+            e = ''
+            e = self.ctrl.init_sensor((self.Channel,self.sens_int))
+        except (AttributeError, DevFailed):
+            self.error_stream('Controller not started')
+            self.set_state(DevState.OFF)
         if e != '':
             self.error_stream(e)
             self.set_state(DevState.FAULT)
@@ -61,17 +65,24 @@ class AM2315BME280MuxSensor(Device):
         
     @DebugIt()
     def always_executed_hook(self):
+        read_out = []
         try:
             # _read_data measures both humidity and temperature
             read_out = self.ctrl.read_data((self.Channel,self.sens_int))
-        except AttributeError:
+            self.set_state(DevState.ON)
+            
+        except (AttributeError, DevFailed, ConnectionFailed):
             self.error_stream('Controller not started')
-        try:
-            for i,a in enumerate(self._attr_lib):
-                self._attr_lib[a] = float(read_out[i])
-    
-        except IndexError:
+            self.set_state(DevState.OFF)
+            return
+        if len(read_out) < 2:
             self.error_stream('Data could not be read')
+            self.set_state(DevState.FAULT)
+            for i,a in enumerate(self._attr_lib):
+                self._attr_lib[a] = float([-1,-1,-1][i])
+        else:
+            for i,a in enumerate(self._attr_lib):
+                    self._attr_lib[a] = float(read_out[i])
 
     @DebugIt()
     def create_attributes(self, argin):
