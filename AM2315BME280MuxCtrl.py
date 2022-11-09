@@ -6,7 +6,12 @@ from tango.server import Device, attribute, command, device_property
 import AM2315
 import board
 from adafruit_bme280 import basic as adafruit_bme280
+<<<<<<< HEAD
 
+=======
+from Adafruit_GPIO import I2C
+import board
+>>>>>>> 19380ca6d0c5c48dee9fe11957b63244f1ae9e80
 
 class AM2315BME280MuxCtrl(Device):
     # device properties
