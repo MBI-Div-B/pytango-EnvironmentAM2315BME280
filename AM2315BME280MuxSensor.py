@@ -68,7 +68,7 @@ class AM2315BME280MuxSensor(Device):
         read_out = []
         try:
             # _read_data measures both humidity and temperature
-            read_out = self.ctrl.read_data((self.Channel,self.sens_int))
+            read_out = self.ctrl.read_data((self.Channel-1,self.sens_int))
             self.set_state(DevState.ON)
             
         except (AttributeError, DevFailed, ConnectionFailed):
