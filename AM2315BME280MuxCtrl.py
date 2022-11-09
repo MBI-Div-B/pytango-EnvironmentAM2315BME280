@@ -46,7 +46,7 @@ class AM2315BME280MuxCtrl(Device):
     @command(dtype_in=(int,) , dtype_out=(float,))
     def read_data(self, channel_sens):
         sens_type = self.sensor_types[channel_sens[1]]
-        self.info_stream(str(sens_type))
+        #self.info_stream(str(sens_type))
         self.mux_select(channel_sens[0])
         try:
             if sens_type == "AM2315": #AM2315
