@@ -21,6 +21,7 @@ class AM2315BME280MuxSensor(Device):
         dtype="str",
         default_value="AM2315",
         )
+    
     def init_device(self):
         
         Device.init_device(self)
@@ -35,10 +36,10 @@ class AM2315BME280MuxSensor(Device):
 
         if self.SensorType.lower() == "am2315":
             self._attr_lib = {"temperature": 0.0, "humidity" : 0.0}
-            self._channel = 0x5c
+            self._address = 0x5c
         elif self.SensorType.lower() == "bme280":
             self._attr_lib = {"temperature": 0.0, "humidity" : 0.0, "pressure" : 0.0}
-            self._channel = 0x77
+            self._address = 0x77
         else:
             self.error_stream('Worng Address')
             self.set_state(DevState.FAULT)
