@@ -29,7 +29,7 @@ class AM2315BME280MuxCtrl(Device):
     def init_sensor(self,channel_sens):
         error = ""
         sens_type = self.sensor_types[channel_sens[1]]
-        if sens_type == "AM2315":
+        if sens_type == "AM2315" or (sens_type == "BME280" and self.bme_init):
             pass
         elif sens_type == "BME280" and not self.bme_init:
             try:
