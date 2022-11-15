@@ -6,6 +6,7 @@ from tango.server import Device, attribute, command, device_property
 import AM2315
 import board
 from adafruit_bme280 import basic as adafruit_bme280
+import time 
 
 class AM2315BME280MuxCtrl(Device):
     # device properties
@@ -23,6 +24,7 @@ class AM2315BME280MuxCtrl(Device):
                              1: "BME280" }
         self.bme_init = False
         self.set_state(DevState.ON)
+        self._current_channel = None
         
     @DebugIt()
     @command(dtype_in=(int,), dtype_out=str)
@@ -46,11 +48,12 @@ class AM2315BME280MuxCtrl(Device):
     @command(dtype_in=(int,) , dtype_out=(float,))
     def read_data(self, channel_sens):
         sens_type = self.sensor_types[channel_sens[1]]
-        #self.info_stream(str(sens_type))
-        self.mux_select(channel_sens[0])
+        if channel_sens[0] != self._current_channel :
+            self.mux_select(channel_sens[0])
+            self._current_channel=channel_sens[0]
         try:
             if sens_type == "AM2315": #AM2315
-                data = (self._am1.read_temperature(), self._am1.read_humidity())
+                data = (self._am1.read_temperature(), self._am1.humidity)
             elif sens_type == "BME280":#BME280
                 data = (self._bme1.temperature,self._bme1.humidity,self._bme1.pressure)
             else:

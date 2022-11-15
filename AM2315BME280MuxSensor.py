@@ -62,27 +62,30 @@ class AM2315BME280MuxSensor(Device):
             
         for i in self._attr_lib:
             self.create_attributes(i)
+        self.read_out = []
         
     @DebugIt()
     def always_executed_hook(self):
-        read_out = []
+        pass
+        '''
         try:
             # _read_data measures both humidity and temperature
-            read_out = self.ctrl.read_data((self.Channel-1,self.sens_int))
+            self.read_out = self.ctrl.read_data((self.Channel,self.sens_int))
             self.set_state(DevState.ON)
             
         except (AttributeError, DevFailed, ConnectionFailed):
             self.error_stream('Controller not started')
             self.set_state(DevState.OFF)
             return
-        if len(read_out) < 2:
+        if len(self.read_out) < 2:
             self.error_stream('Data could not be read')
             self.set_state(DevState.FAULT)
             for i,a in enumerate(self._attr_lib):
                 self._attr_lib[a] = float([-1,-1,-1][i])
         else:
             for i,a in enumerate(self._attr_lib):
-                    self._attr_lib[a] = float(read_out[i])
+                    self._attr_lib[a] = float(self.read_out[i])
+                    '''
 
     @DebugIt()
     def create_attributes(self, argin):
@@ -102,8 +105,28 @@ class AM2315BME280MuxSensor(Device):
         self.add_attribute(attr,r_meth=self.read_value)
     
     def read_value(self,attr):
-        attr.set_value(self._attr_lib[attr.get_name()])
-        return self._attr_lib[attr.get_name()]
+        if attr.get_name() == "temperature":
+            try:
+            # _read_data measures both humidity and temperature
+                self.read_out = self.ctrl.read_data((self.Channel,self.sens_int))
+                self.set_state(DevState.ON)
+            
+            except (AttributeError, DevFailed, ConnectionFailed):
+                self.error_stream('Controller not started')
+                self.set_state(DevState.OFF)
+                return
+            if len(self.read_out) < 2:
+                self.error_stream('Data could not be read')
+                self.set_state(DevState.FAULT)
+                for i,a in enumerate(self._attr_lib):
+                    self._attr_lib[a] = float([-1,-1,-1][i])
+            else:
+                for i,a in enumerate(self._attr_lib):
+                        self._attr_lib[a] = float(self.read_out[i])
+                        
+        value = self._attr_lib[attr.get_name()]
+        attr.set_value(value)
+        return value
         
 
 
