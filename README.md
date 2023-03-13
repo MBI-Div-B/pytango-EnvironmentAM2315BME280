@@ -1,14 +1,13 @@
-# PyTango Device Server for NETIO 230B Extention Cord
+# PyTango Device Server for AM2315 and BME280 Temperature, Humidity, and Pressure Sensors
 
 ## Requirements
-`pip install Adafruit-BME280`
+`pip install Adafruit-BME280 Adafruit-GPIO`
 
-`pip install Adafruit-GPIO`
-
-AM2315.py and AM2315BME280MuxCtrl.py must be in the same directory (or the import statement in AM2315BME280MuxCtrl.py has to be changed)
+AM2315.py must be in the same directory
 
 ## Troubleshooting
-If sensors are connected but the device Server is not receving data. Disconnect and Reconnect the Sensors.
+If sensors are connected but the device Server is not receiving data.
+Disconnect and Reconnect the Sensors.
 
 ## Authors
-Leon Wener
+Leon Werner
