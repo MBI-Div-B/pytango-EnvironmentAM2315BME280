@@ -12,6 +12,7 @@ from tango.server import Device, command, device_property
 import AM2315
 import board
 from adafruit_bme280 import basic as adafruit_bme280
+import numpy as np
 
 
 class EnvironmentAM2315BME280Ctrl(Device):
@@ -62,16 +63,17 @@ class EnvironmentAM2315BME280Ctrl(Device):
                 data = (self._bme1.temperature, self._bme1.humidity,
                         self._bme1.pressure)
             else:
-               self.error_stream('could not read device. wrong device')
+               self.error_stream('Could not read device. wrong device')
+            if np.any(np.array(data) <= -40 ) or np.any(np.array(data) >= 1100):
+                raise Exception()
         except Exception:
-            print('here')
-            self.error_stream('something went wrong while reading the sensor {:d}'.format(channel_sens[0]))
+            self.error_stream('Something went wrong while reading the sensor {:d}'.format(channel_sens[0]))
             data = (-1.)
         return data
 
     def mux_select(self, channel):
         if channel > 7:
-            self.error_stream('channel number too high')
+            self.error_stream('Channel number too high')
             return
         self.i2c.writeto(self.MuxAddress, bytearray([1 << channel]))
 
