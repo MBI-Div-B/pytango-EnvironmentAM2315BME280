@@ -64,8 +64,6 @@ class EnvironmentAM2315BME280Ctrl(Device):
                         self._bme1.pressure)
             else:
                self.error_stream('Could not read device. wrong device')
-            if np.any(np.array(data) <= -40 ) or np.any(np.array(data) >= 1100):
-                raise Exception()
         except Exception:
             self.error_stream('Something went wrong while reading the sensor {:d}'.format(channel_sens[0]))
             data = (-1.)

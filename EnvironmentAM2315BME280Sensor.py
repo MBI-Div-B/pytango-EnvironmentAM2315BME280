@@ -94,11 +94,12 @@ class EnvironmentAM2315BME280Sensor(Device):
                          ).to_attr()
         self.add_attribute(attr, r_meth=self.read_value)
 
+    #@DebugIt()
     def read_value(self, attr):
         # avoid multiple communication with sensor hardware since every read
         # command returns always all attribute values
         # communication is only initiated for temperature
-        if attr.get_name() == "temperature":
+        if attr.get_name() == 'temperature':
             try:
                 # read_data returns measures both humidity and temperature
                 for k, v in zip(self._attr_values,
@@ -115,9 +116,16 @@ class EnvironmentAM2315BME280Sensor(Device):
                 self.set_state(DevState.FAULT)
                 return
 
+        # check if attribute values is within its limits
+        attr_config = attr.get_properties()
+        min_value = float(attr_config.min_value)
+        max_value = float(attr_config.max_value)
         value = self._attr_values[attr.get_name()]
-        attr.set_value(value)
-        return value
+        if (value >= min_value) & (value <= max_value):
+            attr.set_value(value)
+            return value
+        else:
+            return
 
 
 if __name__ == '__main__':
