@@ -103,7 +103,10 @@ class EnvironmentAM2315BME280Sensor(Device):
                 # read_data returns measures both humidity and temperature
                 for k, v in zip(self._attr_values,
                                 self.ctrl.read_data((self.Channel, self.sens_id))):
-                    self._attr_values[k] = float(v)
+                    if (v >= -40) & (v <= 1100):
+                        self._attr_values[k] = float(v)
+                    else:
+                        raise ValueError('Returned data outside of physical hardware limits')
                 self.set_state(DevState.ON)
             except (AttributeError, DevFailed, ConnectionFailed) as e:
                 self.error_stream(e)
