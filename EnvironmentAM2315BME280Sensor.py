@@ -67,7 +67,7 @@ class EnvironmentAM2315BME280Sensor(Device):
             self.error_stream(e)
             self.set_state(DevState.FAULT)
 
-        # create dynamic attributes
+    def initialize_dynamic_attributes(self):
         for k in self._attr_values:
             self.create_attributes(k)
 
