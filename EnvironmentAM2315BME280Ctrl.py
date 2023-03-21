@@ -12,7 +12,7 @@ from tango.server import Device, command, device_property
 import AM2315
 import board
 from adafruit_bme280 import basic as adafruit_bme280
-import numpy as np
+from time import sleep
 
 
 class EnvironmentAM2315BME280Ctrl(Device):
@@ -56,6 +56,7 @@ class EnvironmentAM2315BME280Ctrl(Device):
         if channel_sens[0] != self._current_channel:
             self.mux_select(channel_sens[0])
             self._current_channel = channel_sens[0]
+        sleep(0.25)
         try:
             if sens_type == 'am2315':
                 data = (self._am1.read_temperature(), self._am1.humidity)
@@ -66,7 +67,7 @@ class EnvironmentAM2315BME280Ctrl(Device):
                self.error_stream('Could not read device. wrong device')
         except Exception:
             self.error_stream('Something went wrong while reading the sensor {:d}'.format(channel_sens[0]))
-            data = (-1.)
+            data = ('error', )
         return data
 
     def mux_select(self, channel):
