@@ -53,21 +53,21 @@ class EnvironmentAM2315BME280Ctrl(Device):
     @command(dtype_in=(int,), dtype_out=(float,))
     def read_data(self, channel_sens):
         sens_type = self.sensor_types[channel_sens[1]]
+        data = [-273, -1, -1]
+        sleep(0.1)
         if channel_sens[0] != self._current_channel:
             self.mux_select(channel_sens[0])
             self._current_channel = channel_sens[0]
-        sleep(0.25)
         try:
             if sens_type == 'am2315':
-                data = (self._am1.read_temperature(), self._am1.humidity)
+                data = self._am1.read_temperature_humidity()                
             elif sens_type == 'bme280':
                 data = (self._bme1.temperature, self._bme1.humidity,
                         self._bme1.pressure)
             else:
                self.error_stream('Could not read device. wrong device')
-        except Exception:
+        except Exception as e:
             self.error_stream('Something went wrong while reading the sensor {:d}'.format(channel_sens[0]))
-            data = ('error', )
         return data
 
     def mux_select(self, channel):
@@ -75,6 +75,7 @@ class EnvironmentAM2315BME280Ctrl(Device):
             self.error_stream('Channel number too high')
             return
         self.i2c.writeto(self.MuxAddress, bytearray([1 << channel]))
+        sleep(0.1)
 
 
 if __name__ == '__main__':

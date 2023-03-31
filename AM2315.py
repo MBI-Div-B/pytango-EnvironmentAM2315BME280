@@ -11,7 +11,8 @@ import time
 # GLOBAL VARIABLES
 AM2315_I2CADDR = 0x5c
 AM2315_READREG = 0x03
-MAXREADATTEMPT = 10
+MAXREADATTEMPT = 6
+WAITTIME = 0.1
 
 AM2315DEBUG = False
 
@@ -22,12 +23,7 @@ class AM2315:
         if i2c is None:
             import Adafruit_GPIO.I2C as I2C
             i2c = I2C
-        #if i2c is None:
-         #   from adafruit_bus_device.i2c_device import I2CDevice
-          #  self._device = I2CDevice(bus, address)
-        #self.tca =tca
-        #self.channel_switch = bytearray([1 << channel])
-        self._device = i2c.get_i2c_device(address, busnum = bus, **kwargs)
+        self._device = i2c.get_i2c_device(address, busnum=bus, **kwargs)
         self.humidity = 0
         self.temperature = 0
         self.crc = 0
@@ -52,49 +48,44 @@ class AM2315:
 
 
     def _read_data(self):
-        #self.tca.writeto(0x70, self.channel_switch)
         count = 0
         tmp = None
-        while count <= MAXREADATTEMPT:
+        while count < MAXREADATTEMPT:
             try:
                 # WAKE UP
-                self._device.write8(AM2315_READREG,0x00)
-                time.sleep(0.09)
+                self._device.write8(AM2315_READREG, 0x00)
+                time.sleep(WAITTIME)
                 # TELL THE DEVICE WE WANT 4 BYTES OF DATA
-                self._device.writeList(AM2315_READREG,[0x00, 0x04])
-                time.sleep(0.09)
-                tmp = self._device.readList(AM2315_READREG,8)
-                self.temperature = (((tmp[4] & 0x7F) << 8) | tmp[5]) / 10.0
+                self._device.writeList(AM2315_READREG, [0x00, 0x04])
+                time.sleep(WAITTIME)
+                tmp = self._device.readList(AM2315_READREG, 8)
+                temperature = (((tmp[4] & 0x7F) << 8) | tmp[5]) / 10.0
                 # check for > 10.0 degrees higher
                 if (self.AM2315PreviousTemp != -1000):   # ignore first time
-                        if (abs(self.AM2315PreviousTemp - self.temperature) > 10.0):
+                        if (abs(self.AM2315PreviousTemp - temperature) > 10.0):
                             # OK, temp is bad.  Ignore
                             if (AM2315DEBUG == True):
                                 print (">>>>>>>>>>>>>")
-                                print ("Bad AM2315 Temperature = ", self.temperature)
+                                print ("Bad AM2315 Temperature = ", temperature)
                                 print (">>>>>>>>>>>>>")
                                 self.badreadings = self.badreadings+1
                                 tmp = None
                         else:
                             # Good Temperature
-                            self.AM2315PreviousTemp = self.temperature
+                            self.AM2315PreviousTemp = temperature
                 else:
                     # assume first is good temperature
-                    self.AM2315PreviousTemp = self.temperature
+                    self.AM2315PreviousTemp = temperature
                 # IF WE HAVE DATA, LETS EXIT THIS LOOP
                 if tmp != None:
                     break
-            except:
+            except Exception as e:
                 if (AM2315DEBUG == True):
                     print ("AM2315readCount = ", count)
+                    print('In AM2315')
+                    print(e)
                 count += 1
-                time.sleep(0.01)
-       
-        # GET THE DATA OUT OF THE LIST WE READ
-        self.humidity = ((tmp[2] << 8) | tmp[3]) / 10.0
-        self.temperature = (((tmp[4] & 0x7F) << 8) | tmp[5]) / 10.0
-        if (tmp[4] & 0x80):
-            self.temperature = -self.temperature
+                time.sleep(WAITTIME)
 
         self.crc = ((tmp[7] << 8) | tmp[6]) 
         # Verify CRC here
@@ -104,10 +95,20 @@ class AM2315:
         c = self.verify_crc(t)
 
         if (AM2315DEBUG == True):
-            print ("AM2315temperature=",self.temperature)
-            print ("AM2315humdity=",self.humidity)
-            print ("AM2315crc=",self.crc)
-            print ("AM2315c=",c)
+            print ("AM2315temperature=", self.temperature)
+            print ("AM2315humdity=", self.humidity)
+            print ("AM2315crc=", self.crc)
+            print ("AM2315c=", c)
+
+        # GET THE DATA OUT OF THE LIST WE READ
+        if (tmp != None):
+            self.humidity = ((tmp[2] << 8) | tmp[3]) / 10.0
+            self.temperature = (((tmp[4] & 0x7F) << 8) | tmp[5]) / 10.0
+            if (tmp[4] & 0x80):
+                self.temperature = -self.temperature
+        else:
+            self.humidity = -1
+            self.temperature = -273
 
         if self.crc != c:
             if (AM2315DEBUG == True):
@@ -125,9 +126,9 @@ class AM2315:
         self._read_data()
         return self.humidity
 
-    def read_humidity_temperature(self):
+    def read_temperature_humidity(self):
         self._read_data()
-        return (self.humidity, self.temperature)
+        return (self.temperature, self.humidity)
 
     def read_humidity_temperature_crc(self):
         self._read_data()
@@ -135,11 +136,3 @@ class AM2315:
 
     def read_status_info(self):
         return  (self.goodreads, self.badreadings, self.badcrcs)
-'''
-if __name__ == "__main__":
-    am2315 = AM2315()
-    print (am2315.read_temperature())
-    print (am2315.read_humidity())
-    print (am2315.read_humidity_temperature())
-    print (am2315.read_humidity_temperature_crc())
-'''

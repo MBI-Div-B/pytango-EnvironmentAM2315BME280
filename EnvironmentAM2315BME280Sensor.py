@@ -8,7 +8,7 @@
 
 
 from tango import AttrWriteType, DevState, DeviceProxy, DevFailed
-from tango import ConnectionFailed
+from tango import ConnectionFailed, AttrQuality
 from tango.server import Device, attribute, device_property
 
 
@@ -110,11 +110,9 @@ class EnvironmentAM2315BME280Sensor(Device):
                 self.error_stream(e)
                 self.error_stream('Communication with controller broken')
                 self.set_state(DevState.OFF)
-                return
             except ValueError:
-                self.error_stream('Retuned data seems to be corrupt')
+                self.error_stream('Returned data seems to be corrupt')
                 self.set_state(DevState.FAULT)
-                return
 
         # check if attribute values is within its limits
         attr_config = attr.get_properties()
@@ -123,9 +121,9 @@ class EnvironmentAM2315BME280Sensor(Device):
         value = self._attr_values[attr.get_name()]
         if (value >= min_value) & (value <= max_value):
             attr.set_value(value)
-            return value
         else:
-            return
+            attr.set_qualtity(AttrQuality.ATTR_INVALID)
+            self.error_stream('attribute value is invalid')
 
 
 if __name__ == '__main__':
